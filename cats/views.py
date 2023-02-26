@@ -1,17 +1,19 @@
 from rest_framework import viewsets
-from rest_framework.throttling import AnonRateThrottle
+from rest_framework.throttling import ScopedRateThrottle
 
 from .models import Achievement, Cat, User
 
 from .serializers import AchievementSerializer, CatSerializer, UserSerializer
+from .throttling import WorkingHoursRateThrottle
 
 
 class CatViewSet(viewsets.ModelViewSet):
     queryset = Cat.objects.all()
     serializer_class = CatSerializer
-    # Подключили класс AnonRateThrottle
-    # Классы имеют более высокий приоритет
-    # throttle_classes = (AnonRateThrottle,)
+    # Если кастомный тротлинг-класс вернёт True - запросы будут обработаны
+    # Если он вернёт False - все запросы будут отклонены
+    throttle_classes = (WorkingHoursRateThrottle, ScopedRateThrottle,)
+    # А далее применится лимит low_request
     throttle_scope = 'low_rate'  # Для всех единое ограничение
 
     def perform_create(self, serializer):
